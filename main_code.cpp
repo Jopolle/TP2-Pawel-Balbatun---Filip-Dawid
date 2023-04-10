@@ -23,27 +23,44 @@ struct Block {
 class Player {
 public:
     int column;
-    int row;
 
-    Player(int col) : column(col), row(W - 1) {}
+    Player(int col) : column(col) {}
 };
 
 void wyswietl_plansze( std::vector<std::queue<Block>>& plansza, const Player& gracz) {
+
+    std::vector<std::queue<Block>> tempVector = plansza;
+
+
+
+
+
     std::cout << " +";
     for (int i = 0; i < K; i++) {
         std::cout << "----+";
     }
     std::cout << std::endl;
-
-
     for (int i = 0; i < W; i++) {
         std::cout<<"| ";
         for (int j = 0; j < K; j++) {
-            std::cout << plansza[j].front().look << " ";
-            plansza[j].pop();
+            std::cout << tempVector[j].front().look << " ";
+            tempVector[j].pop();
         }
         std::cout << "|" << std::endl;
     }
+    std::cout<<"| ";
+    for (int i = 0; i < K; i++){
+        if(gracz.column == i){ std::cout << "=[]= ";}
+        else{
+            std::cout << "     ";
+        }
+
+
+    }
+
+    std::cout << "|" << std::endl;
+
+
     std::cout << " +";
     for (int j = 0; j < K; j++) {
         std::cout << "----+";
@@ -70,7 +87,24 @@ int main() {
             plansza[ii].push(blok);
         }
     }
-    Player gracz(K / 2);
+    Player gracz(K/2);
+
+    // test poruszania sie
+
+    wyswietl_plansze(plansza, gracz);
+    char input;
+    int col = K/2;
+    do{
+        input = std::getchar();
+        if(input == 'd' && col+1<K) col++;
+        else if(input == 'a' && col-1>-1) col--;
+        gracz.column = col;
+        system("clear");
+        wyswietl_plansze(plansza, gracz);
+
+    }while(input != 'q');
+
+
 /*
     std::thread druk(std::bind(wyswietl_plansze, plansza, gracz));
 
