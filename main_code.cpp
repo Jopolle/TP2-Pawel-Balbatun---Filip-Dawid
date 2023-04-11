@@ -12,11 +12,11 @@
 
 
 
-const int W = 5; // liczba wierszy
-const int K = 8; // liczba kolumn
-const int B = 3; // liczba bloczków w każdej kolumnie na początku
-const int R = K/2; // liczba ruchów do dodania nowego bloczka
-const int N = 5; // wartość losowa z przedziału [0,n)
+const int W = 6; // wiersze
+const int K = 6; // kolumny
+const int B = 3; // bloczki
+const int R = 5;  //stała ruchów
+const int N = 5; // losowa z przedziału [0,n)
 
 
 struct Block {
@@ -33,25 +33,79 @@ public:
 
 
 void wyswietl_plansze( std::vector<std::queue<Block>>& plansza, const Player& gracz);
-
-
+void generuj_plansze(std::vector<std::queue<Block>> & plansza);
+void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz);
 
 
 
 int main() {
-    std::vector<std::queue<Block>> plansza(K);
 
-    // wstępna generacja wektora planszy
+    Player gracz(K/2);
+    std::vector<std::queue<Block>> plansza(K);
+    generuj_plansze(plansza);
+    game_loop(plansza, gracz);
+
+/*
+    std::thread druk(std::bind(wyswietl_plansze, plansza, gracz));
+    druk.join();
+*/
+
+    return 0;
+}
+
+void wyswietl_plansze( std::vector<std::queue<Block>>& plansza, const Player& gracz) {
+
+    std::vector<std::queue<Block>> tempVector = plansza;
+
+    std::cout << " +";
+    for (int i = 0; i < K; i++) {
+        std::cout << "----+";
+    }
+    std::cout << std::endl;
+
+    for (int i = 0; i < W; i++) {
+        std::cout<<"| ";
+        for (int j = 0; j < K; j++) {
+            if(!tempVector[j].empty()) {
+                std::cout << tempVector[j].front().look << " ";
+                tempVector[j].pop();
+            }
+            else{
+                std::cout << "     ";
+            }
+        }
+        std::cout << "|" << std::endl;
+    }
+
+    std::cout<<"| ";
+    for (int i = 0; i < K; i++){
+        if(gracz.column == i){ std::cout << "=[]= ";}
+        else{
+            std::cout << "     ";
+        }
+    }
+    std::cout << "|" << std::endl;
+
+    std::cout << " +";
+    for (int j = 0; j < K; j++) {
+        std::cout << "----+";
+    }
+    std::cout << std::endl;
+}
+
+
+
+
+void generuj_plansze(std::vector<std::queue<Block>> & plansza){
     for (int i = 0; i < K; i++) {
         for (int j = 0; j < B; j++) {
             Block blok = {"####", false};
             plansza[i].push(blok);
         }
     }
+}
 
-    Player gracz(K/2);
-
-
+void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz){
 
     wyswietl_plansze(plansza, gracz);
     char input;
@@ -68,56 +122,6 @@ int main() {
         wyswietl_plansze(plansza, gracz);
 
     }while(input != 'q');
-
-
-/*
-    std::thread druk(std::bind(wyswietl_plansze, plansza, gracz));
-    druk.join();
-*/
-    wyswietl_plansze(plansza, gracz);
-
-    return 0;
-}
-
-void wyswietl_plansze( std::vector<std::queue<Block>>& plansza, const Player& gracz) {
-
-    std::vector<std::queue<Block>> tempVector = plansza;
-
-    std::cout << " +";
-    for (int i = 0; i < K; i++) {
-        std::cout << "----+";
-    }
-    std::cout << std::endl;
-    for (int i = 0; i < W; i++) {
-        std::cout<<"| ";
-        for (int j = 0; j < K; j++) {
-            if(!tempVector[j].empty()) {
-                std::cout << tempVector[j].front().look << " ";
-                tempVector[j].pop();
-            }
-            else{
-                std::cout << "     ";
-            }
-        }
-        std::cout << "|" << std::endl;
-    }
-    std::cout<<"| ";
-    for (int i = 0; i < K; i++){
-        if(gracz.column == i){ std::cout << "=[]= ";}
-        else{
-            std::cout << "     ";
-        }
-
-
-    }
-
-    std::cout << "|" << std::endl;
-
-
-    std::cout << " +";
-    for (int j = 0; j < K; j++) {
-        std::cout << "----+";
-    }
-    std::cout << std::endl;
+    
 }
 
