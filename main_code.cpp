@@ -5,6 +5,7 @@
 #include <thread>
 #include <ctime>
 #include <functional>
+#include <stack>
 
 
 
@@ -32,10 +33,12 @@ void wyswietl_plansze( const std::vector<std::queue<Block>>& plansza, const Play
 void generuj_plansze(std::vector<std::queue<Block>> & plansza);
 void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz);
 int losuj();
+void dodawanie_bloczkow(std::vector<std::queue<Block>> & plansza);
+std::vector<std::queue<Block>> kopiuj_wektor(const std::vector<std::queue<Block>>& plansza);
 
 
 int main() {
-
+    srand(time(NULL));
     Player gracz(K/2);
     std::vector<std::queue<Block>> plansza(K);
     generuj_plansze(plansza);
@@ -46,7 +49,7 @@ int main() {
 
 void wyswietl_plansze( const std::vector<std::queue<Block>>& plansza, const Player& gracz) {
 
-    std::vector<std::queue<Block>> tempVector = plansza;
+    std::vector<std::queue<Block>> tempVector = kopiuj_wektor(plansza);
 
     std::cout << " +";
     for (int i = 0; i < K; i++) {
@@ -98,29 +101,68 @@ void generuj_plansze(std::vector<std::queue<Block>> & plansza){
 
 void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz){
 
-
-
+    char input;
+    int col = K/2, r = losuj();
     std::thread druk(std::bind(wyswietl_plansze, plansza, gracz));
 
     druk.join();
-    char input;
-    int col = K/2;
+
+
     do{
         std::thread drukuj(std::bind(wyswietl_plansze, plansza, gracz));
         input = std::getchar();
-        if(input == 'd' && col+1<K) col++;
-        else if(input == 'a' && col-1>-1) col--;
-        else if(input == 'w'){
-            if(!plansza[col].empty())   plansza[col].pop();
+
+        if(r==0){
+            r = losuj();
+            dodawanie_bloczkow(plansza);
         }
+
+        switch (input) {
+            case 'd': if(col+1<K) col++; break;
+            case 'a': if(col>0) col--; break;
+            case 'w': if(!plansza[col].empty())   plansza[col].pop();
+        }
+
         gracz.column = col;
+        r--;
         system("clear");
         if(drukuj.joinable())drukuj.join();
     }while(input != 'q');
 }
 
 int losuj() {
-    srand(time(NULL));
-    return rand() % (N + 1);
+    return R + rand() % (N + 1);
 }
 
+void dodawanie_bloczkow(std::vector<std::queue<Block>> & plansza){
+    int r = rand()%(K+1);
+    for(int i = 0; i<K; i++){
+        if(i!=r){
+            Block blok1 = {"####", false};
+            plansza[i].push(blok1);
+        }
+        else if(i==r){
+            Block blok2 = {"#++#", true};
+            plansza[i].push(blok2);
+        }
+    }
+
+}
+
+std::vector<std::queue<Block>> kopiuj_wektor(const std::vector<std::queue<Block>>& plansza){
+    std::vector<std::queue<Block>> buffor = plansza, output(K);
+    for(int i = 0; i < K; i++){
+        std::queue<Block> kolejka;
+        std::stack<Block> stos;
+        while(!buffor[i].empty()){
+            stos.push(buffor[i].front());
+            buffor[i].pop();
+        }
+        while(!stos.empty()){
+            kolejka.push(stos.top());
+            stos.pop();
+        }
+        output[i] = kolejka;
+    }
+    return output;
+}
