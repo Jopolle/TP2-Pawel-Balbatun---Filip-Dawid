@@ -3,17 +3,13 @@
 #include <queue>
 #include <cstdlib>
 #include <thread>
-
-
-/*
-#include <functional> ???????
-#include <pthread.h> ??????
-*/
+#include <ctime>
+#include <functional>
 
 
 
 const int W = 6; // wiersze
-const int K = 6; // kolumny
+const int K = 7; // kolumny
 const int B = 3; // bloczki
 const int R = 5;  //stała ruchów
 const int N = 5; // losowa z przedziału [0,n)
@@ -28,14 +24,14 @@ class Player {
 public:
     int column;
 
-    Player(int col) : column(col) {}
+    explicit Player(int col) : column(col){}
 };
 
 
-void wyswietl_plansze( std::vector<std::queue<Block>>& plansza, const Player& gracz);
+void wyswietl_plansze( const std::vector<std::queue<Block>>& plansza, const Player& gracz);
 void generuj_plansze(std::vector<std::queue<Block>> & plansza);
 void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz);
-
+int losuj();
 
 
 int main() {
@@ -45,15 +41,10 @@ int main() {
     generuj_plansze(plansza);
     game_loop(plansza, gracz);
 
-/*
-    std::thread druk(std::bind(wyswietl_plansze, plansza, gracz));
-    druk.join();
-*/
-
     return 0;
 }
 
-void wyswietl_plansze( std::vector<std::queue<Block>>& plansza, const Player& gracz) {
+void wyswietl_plansze( const std::vector<std::queue<Block>>& plansza, const Player& gracz) {
 
     std::vector<std::queue<Block>> tempVector = plansza;
 
@@ -107,10 +98,15 @@ void generuj_plansze(std::vector<std::queue<Block>> & plansza){
 
 void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz){
 
-    wyswietl_plansze(plansza, gracz);
+
+
+    std::thread druk(std::bind(wyswietl_plansze, plansza, gracz));
+
+    druk.join();
     char input;
     int col = K/2;
     do{
+        std::thread drukuj(std::bind(wyswietl_plansze, plansza, gracz));
         input = std::getchar();
         if(input == 'd' && col+1<K) col++;
         else if(input == 'a' && col-1>-1) col--;
@@ -119,9 +115,12 @@ void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz){
         }
         gracz.column = col;
         system("clear");
-        wyswietl_plansze(plansza, gracz);
-
+        if(drukuj.joinable())drukuj.join();
     }while(input != 'q');
-    
+}
+
+int losuj() {
+    srand(time(NULL));
+    return rand() % (N + 1);
 }
 
