@@ -6,14 +6,15 @@
 #include <ctime>
 #include <functional>
 #include <stack>
+#include <stdio.h>
 
 
 
 const int W = 6; // wiersze
 const int K = 7; // kolumny
 const int B = 3; // bloczki
-const int R = 5;  //stała ruchów
-const int N = 5; // losowa z przedziału [0,n)
+const int R = 10;  //stała ruchów
+const int N = 8; // losowa z przedziału [0,n)
 
 
 struct Block {
@@ -112,9 +113,12 @@ void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz){
         std::thread drukuj(std::bind(wyswietl_plansze, plansza, gracz));
         input = std::getchar();
 
-        if(r==0){
+        if(r<=0){
             r = losuj();
             dodawanie_bloczkow(plansza);
+        }
+        else if(r!=0){
+            r--;
         }
 
         switch (input) {
@@ -124,14 +128,14 @@ void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz){
         }
 
         gracz.column = col;
-        r--;
+
         system("clear");
         if(drukuj.joinable())drukuj.join();
     }while(input != 'q');
 }
 
 int losuj() {
-    return R + rand() % (N + 1);
+    return 2 * (rand() % (N + 1) + R);
 }
 
 void dodawanie_bloczkow(std::vector<std::queue<Block>> & plansza){
