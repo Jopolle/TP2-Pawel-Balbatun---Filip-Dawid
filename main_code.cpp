@@ -6,7 +6,8 @@
 #include <ctime>
 #include <functional>
 #include <stack>
-#include <stdio.h>
+
+
 
 
 
@@ -25,22 +26,23 @@ struct Block {
 class Player {
 public:
     int column;
-
-    explicit Player(int col) : column(col){}
+    bool bonus;
+    Player(int col, bool b) : column(col), bonus(b) {}
 };
 
 
-void wyswietl_plansze( const std::vector<std::queue<Block>>& plansza, const Player& gracz);
+void wyswietl_plansze( const std::vector<std::queue<Block>>& plansza, const Player& gracz, const int punkty);
 void generuj_plansze(std::vector<std::queue<Block>> & plansza);
 void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz);
 int losuj();
 void dodawanie_bloczkow(std::vector<std::queue<Block>> & plansza);
 std::vector<std::queue<Block>> kopiuj_wektor(const std::vector<std::queue<Block>>& plansza);
+void strzelanie( std::vector<std::queue<Block>> & plansza, Player & gracz, int col, int & punkty);
+bool koniec_gry(const std::vector<std::queue<Block>> & plansza);
 
 
 int main() {
-    srand(time(NULL));
-    Player gracz(K/2);
+    Player gracz(K/2, false);
     std::vector<std::queue<Block>> plansza(K);
     generuj_plansze(plansza);
     game_loop(plansza, gracz);
@@ -48,10 +50,10 @@ int main() {
     return 0;
 }
 
-void wyswietl_plansze( const std::vector<std::queue<Block>>& plansza, const Player& gracz) {
+void wyswietl_plansze( const std::vector<std::queue<Block>>& plansza, const Player& gracz, const int punkty) {
 
     std::vector<std::queue<Block>> tempVector = kopiuj_wektor(plansza);
-
+    std::cout<< "Punkty: " <<punkty<<std::endl;
     std::cout << " +";
     for (int i = 0; i < K; i++) {
         std::cout << "----+";
@@ -103,38 +105,41 @@ void generuj_plansze(std::vector<std::queue<Block>> & plansza){
 void game_loop(std::vector<std::queue<Block>> & plansza, Player & gracz){
 
     char input;
-    int col = K/2, r = losuj();
-    std::thread druk(std::bind(wyswietl_plansze, plansza, gracz));
-
-    druk.join();
-
+    int col = K/2, r = losuj(), punkty = 0;
+    bool koniec;
 
     do{
-        std::thread drukuj(std::bind(wyswietl_plansze, plansza, gracz));
+        std::thread drukuj(std::bind(wyswietl_plansze, plansza, gracz, punkty));
         input = std::getchar();
-
         if(r<=0){
             r = losuj();
             dodawanie_bloczkow(plansza);
         }
-        else if(r!=0){
+        else{
             r--;
         }
-
         switch (input) {
             case 'd': if(col+1<K) col++; break;
             case 'a': if(col>0) col--; break;
-            case 'w': if(!plansza[col].empty())   plansza[col].pop();
+            case 'w': strzelanie(plansza, gracz, col, punkty); break;
+
         }
-
         gracz.column = col;
-
         system("clear");
         if(drukuj.joinable())drukuj.join();
+        koniec = koniec_gry(plansza);
+        if(koniec) break;
+
     }while(input != 'q');
+    if(koniec){
+        system("clear");
+        std::cout<< "Koniec gry" << std::endl << "Zdobyta liczba punktów: " << punkty<< std::endl;
+    }
+
 }
 
 int losuj() {
+    srand(time(NULL));
     return 2 * (rand() % (N + 1) + R);
 }
 
@@ -169,4 +174,30 @@ std::vector<std::queue<Block>> kopiuj_wektor(const std::vector<std::queue<Block>
         output[i] = kolejka;
     }
     return output;
+}
+
+
+void strzelanie(  std::vector<std::queue<Block>> & plansza, Player & gracz, const int col, int & punkty){
+
+    if(!plansza[col].empty() && !gracz.bonus) {
+        if(plansza[col].front().has_bonus) gracz.bonus = true;
+        plansza[col].pop();
+        punkty++;
+    }else if(!plansza[col].empty() && plansza[col].size() >= 2 &&  gracz.bonus) {
+        plansza[col].pop();
+        plansza[col].pop();
+        gracz.bonus = false;
+        punkty = punkty + 2;
+    }else if(!plansza[col].empty() && plansza[col].size() < 2 &&  gracz.bonus) {
+        plansza[col].pop();
+        gracz.bonus = false;
+        punkty++;
+    }
+}
+
+bool koniec_gry(const std::vector<std::queue<Block>> & plansza){
+    for(int i = 0; i < K; i++){
+        if(plansza[i].size() == (W+1)) return true;
+    }
+    return false;
 }
